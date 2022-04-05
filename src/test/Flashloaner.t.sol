@@ -77,7 +77,7 @@ contract FlashloanerTest is DSTest {
         // HINT: this is an example for how to assert a failure
         // try flashloaner.flashloan(amountToBorrow) {
         //     fail();
-        // } catch (string memory error) {
+        // } catch Error(string memory error) {
         //     assertEq(error, "NOT_ENOUGH_TOKENS");
         // }
     }
