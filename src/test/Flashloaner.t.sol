@@ -28,7 +28,7 @@ contract FlashloanerTest is DSTest {
     /// This function will be called back into when this contract calls `flashloan` on the Flashloaner
     function receiveTokens(address tokenAddress, uint256 amountToBorrow) public {
         // Do sick arbs with the funds
-        token.transfer(address(msg.sender), _returnAmount);
+        MockERC20(tokenAddress).transfer(address(msg.sender), _returnAmount);
     }
     /* ======================================== */
 
@@ -56,10 +56,20 @@ contract FlashloanerTest is DSTest {
         assertEq(token.balanceOf(address(this)), INITIAL_BALANCE);
     }
 
+    function testWithdrawTooMuch() public {
+        token.approve(address(flashloaner), INITIAL_BALANCE / 2);
+        flashloaner.deposit(INITIAL_BALANCE / 2);
+        try flashloaner.withdraw(INITIAL_BALANCE) {
+            fail();
+        } catch Error(string memory error) {
+            assertEq(error, "NOT_ENOUGH_TOKENS");
+        }
+    }
+
     function testBasicFlashLoan() public {
         // Give the flashloaner half of the APE tokens in this contract
         token.approve(address(flashloaner), INITIAL_BALANCE / 2);
-        flashloaner.deposit(INITIAL_BALANCE  / 2);
+        flashloaner.deposit(INITIAL_BALANCE / 2);
 
         // Borrow and return the full balance available
         uint256 flashloanerBalancePre = flashloaner.balance();
@@ -69,18 +79,53 @@ contract FlashloanerTest is DSTest {
 
         assertEq(token.balanceOf(address(this)), INITIAL_BALANCE - flashloanerBalancePre);
         assertEq(flashloanerBalancePre, flashloaner.balance());
+        assertEq(token.balanceOf(address(flashloaner)), flashloaner.balance());
     }
 
-    function testFlashFailingCondition() public {
-        // TODO
+    function testFlashloanNothing() public {
+        token.approve(address(flashloaner), INITIAL_BALANCE / 2);
+        flashloaner.deposit(INITIAL_BALANCE  / 2);
 
-        // HINT: this is an example for how to assert a failure
-        // try flashloaner.flashloan(100e18) {
-        //     fail();
-        // } catch Error(string memory error) {
-        //     assertEq(error, "NOT_ENOUGH_TOKENS");
-        // }
+        flashloaner.flashloan(0);
+        assertEq(INITIAL_BALANCE / 2, flashloaner.balance());
+        assertEq(INITIAL_BALANCE / 2, token.balanceOf(address(this)));
     }
 
-    // TOOD: add more tests
+    function testFlashFailingLoanTooLarge() public {
+        token.approve(address(flashloaner), INITIAL_BALANCE / 2);
+        flashloaner.deposit(INITIAL_BALANCE  / 2);
+
+        try flashloaner.flashloan(INITIAL_BALANCE) {
+            fail();
+        } catch Error(string memory error) {
+            assertEq(error, "NOT_ENOUGH_TOKENS");
+        }
+    }
+
+    function testFlashFailingTooFewTokensReturned() public {
+        token.approve(address(flashloaner), INITIAL_BALANCE / 2);
+        flashloaner.deposit(INITIAL_BALANCE / 2);
+
+        uint256 flashloanerBalancePre = flashloaner.balance();
+        _returnAmount = flashloanerBalancePre / 2;
+        try flashloaner.flashloan(flashloanerBalancePre) {
+            fail();
+        } catch Error(string memory error) {
+            assertEq(error, "TOO_FEW_TOKENS_RETURNED");
+        }
+    }
+
+    function testFlashTooManyTokensReturned() public {
+        token.approve(address(flashloaner), INITIAL_BALANCE / 4);
+        flashloaner.deposit(INITIAL_BALANCE / 4);
+
+        uint256 flashloanerBalancePre = flashloaner.balance();
+        _returnAmount = INITIAL_BALANCE / 2;
+
+        flashloaner.flashloan(flashloanerBalancePre);
+
+        assertEq(INITIAL_BALANCE - _returnAmount, token.balanceOf(address(this)));
+        assertEq(_returnAmount, flashloaner.balance());
+        assertEq(flashloaner.balance(), token.balanceOf(address(flashloaner)));
+    }
 }

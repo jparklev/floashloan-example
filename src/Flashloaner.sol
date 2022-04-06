@@ -21,6 +21,7 @@ contract Flashloaner {
     }
 
     function withdraw(uint256 _amount) public {
+        require(_amount <= balance, "NOT_ENOUGH_TOKENS");
         token.transfer(msg.sender, _amount);
         balance -= _amount;
     }
@@ -34,5 +35,6 @@ contract Flashloaner {
         FlashloanCallback(msg.sender).receiveTokens(address(token), amountToBorrow);
 
         require(balance <= token.balanceOf(address(this)), "TOO_FEW_TOKENS_RETURNED");
+        balance = token.balanceOf(address(this));
     }
 }
