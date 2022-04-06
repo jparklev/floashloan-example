@@ -40,6 +40,14 @@ contract FlashloanerTest is DSTest {
         assertEq(token.balanceOf(address(flashloaner)), flashloaner.balance());
     }
 
+  function testWithdrawFailingCondition() public {
+        try flashloaner.withdraw(100e18) {
+            fail();
+        } catch Error(string memory error) {
+            assertEq(error, "NICE_TRY_NERD");
+        }
+    }
+
     function testFuzzWithdraw(uint256 amount) public {
         // Only test fuzz params that are less than the balance of APE tokens in this contract
         if (amount > INITIAL_BALANCE) {
@@ -72,14 +80,11 @@ contract FlashloanerTest is DSTest {
     }
 
     function testFlashFailingCondition() public {
-        // TODO
-
-        // HINT: this is an example for how to assert a failure
-        // try flashloaner.flashloan(amountToBorrow) {
-        //     fail();
-        // } catch (string memory error) {
-        //     assertEq(error, "NOT_ENOUGH_TOKENS");
-        // }
+        try flashloaner.flashloan(100e18) {
+            fail();
+        } catch Error(string memory error) {
+            assertEq(error, "NOT_ENOUGH_TOKENS");
+        }
     }
 
     // TOOD: add more tests

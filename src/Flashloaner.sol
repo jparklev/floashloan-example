@@ -21,6 +21,7 @@ contract Flashloaner {
     }
 
     function withdraw(uint256 _amount) public {
+        require(_amount <= balance, "NICE_TRY_NERD");
         token.transfer(msg.sender, _amount);
         balance -= _amount;
     }
