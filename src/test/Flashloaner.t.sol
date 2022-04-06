@@ -71,15 +71,18 @@ contract FlashloanerTest is DSTest {
         assertEq(flashloanerBalancePre, flashloaner.balance());
     }
 
-    function testFlashFailingCondition() public {
-        // TODO
+    function testShouldReturnBorrowedAmount() public {
+        token.approve(address(flashloaner), INITIAL_BALANCE / 2);
+        flashloaner.deposit(INITIAL_BALANCE  / 2);
 
+        _returnAmount = INITIAL_BALANCE / 4;
         // HINT: this is an example for how to assert a failure
-        // try flashloaner.flashloan(100e18) {
-        //     fail();
-        // } catch Error(string memory error) {
-        //     assertEq(error, "NOT_ENOUGH_TOKENS");
-        // }
+        try flashloaner.flashloan(INITIAL_BALANCE / 2) {
+            // Should fail
+            assertTrue(false);
+        } catch Error(string memory error) {
+            assertEq(error, "TOO_FEW_TOKENS_RETURNED");
+        }
     }
 
     // TOOD: add more tests

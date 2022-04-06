@@ -20,6 +20,7 @@ contract Flashloaner {
         balance += _amount;
     }
 
+    // Why do we expose deposit and withdraw?
     function withdraw(uint256 _amount) public {
         token.transfer(msg.sender, _amount);
         balance -= _amount;
